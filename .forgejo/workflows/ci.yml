@@ -53,6 +53,67 @@ jobs:
           ./target/release/kvant --version
           ./target/release/kv --version
 
+  publish-nightly:
+    name: "Publish Nightly Release (Codeberg)"
+    runs-on: ubuntu-latest
+    needs: [test, build-release]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: "Checkout"
+        uses: https://github.com/actions/checkout@v4
+
+      - name: "Install Rust Toolchain"
+        uses: https://github.com/actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: "Build Release Tarball"
+        run: |
+          cargo build --release
+          mkdir -p dist
+          tar -czvf "dist/kv-linux-x86_64.tar.gz" -C target/release kv kvant
+
+      - name: "Update Nightly Release Asset"
+        env:
+          TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+          if [ -z "$TOKEN" ]; then
+            echo "::warning::No token available to publish nightly release."
+            exit 0
+          fi
+
+          REL_JSON=$(curl -s -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/tags/nightly")
+          REL_ID=$(echo "$REL_JSON" | sed -n 's/.*"id":[[:space:]]*\([0-9]*\).*/\1/p' | head -n 1)
+
+          if [ -z "$REL_ID" ] || [ "$REL_ID" = "null" ]; then
+            RESP=$(curl -s -X POST \
+              -H "Authorization: token $TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"tag_name":"nightly","name":"Kvant Nightly Build","body":"Automated rolling nightly build","prerelease":true}' \
+              "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases")
+            REL_ID=$(echo "$RESP" | sed -n 's/.*"id":[[:space:]]*\([0-9]*\).*/\1/p' | head -n 1)
+          fi
+
+          [ -n "$REL_ID" ] || { echo "Failed to get release ID"; exit 0; }
+
+          for f in dist/*.tar.gz; do
+            [ -f "$f" ] || continue
+            fname=$(basename "$f")
+            ASSET_ID=$(curl -s -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets" | \
+              sed -n "s/.*\"id\":[[:space:]]*\([0-9]*\).*\"name\":[[:space:]]*\"${fname}\".*/\1/p" | head -n 1)
+            if [ -n "$ASSET_ID" ]; then
+              curl -s -X DELETE -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets/$ASSET_ID" >/dev/null
+            fi
+            curl -s -X POST \
+              -H "Authorization: token $TOKEN" \
+              -H "Content-Type: multipart/form-data" \
+              -F "attachment=@$f" \
+              "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets?name=${fname}"
+          done
+
   deploy-docs:
     name: "Deploy Documentation (kvant.2lp.in)"
     runs-on: ubuntu-latest
