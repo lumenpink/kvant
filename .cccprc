@@ -1,0 +1,4 @@
+codeberg_owner = lumenpink
+codeberg_repo = kvant
+agent_md_url = https://gist.githubusercontent.com/lumenpink/ebaded4f8bfb956346c28b64f48754fb/raw/c48a2f9cfb4fd73dcb944c4e47a5b17b8f3a3a2e/AGENTS.md
+agent_var_lang = english

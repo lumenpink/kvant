@@ -1,0 +1,26 @@
+[package]
+name = "kvant"
+version = "0.1.0-dev.1"
+edition = "2021"
+authors = ["Lumen Pink <hi@lumen.pink>"]
+description = "Kvant (kv) — Micro terminal text editor in pure Rust with full keyboard navigation"
+license = "Apache-2.0"
+repository = "https://codeberg.org/lumenpink/kvant"
+homepage = "https://kvant.2lp.in"
+readme = "README.md"
+keywords = ["editor", "terminal", "micro", "minimalist", "cli"]
+categories = ["command-line-utilities", "text-editors"]
+
+[lib]
+name = "kvant"
+path = "src/lib.rs"
+
+[[bin]]
+name = "kvant"
+path = "src/bin/kvant.rs"
+
+[[bin]]
+name = "kv"
+path = "src/bin/kv.rs"
+
+[dependencies]

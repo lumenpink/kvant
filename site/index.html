@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kvant (kv) — Micro Editor de Terminal em Rust Puro</title>
+  <meta name="description" content="Micro-editor de texto para terminal em Rust puro com navegação universal por teclado, zero dependências externas e alta performance.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚛️</text></svg>">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-hover: #79c0ff;
+      --gold: #d29922;
+      --green: #3fb950;
+      --code-bg: #030407;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      padding: 0 1rem;
+    }
+    header {
+      max-width: 900px;
+      margin: 4rem auto 2rem;
+      text-align: center;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #f0f6fc;
+      margin-bottom: 1rem;
+    }
+    h1 span {
+      color: var(--gold);
+    }
+    .lead {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      max-width: 700px;
+      margin: 0 auto 2rem;
+    }
+    .actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 3rem;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .btn-primary {
+      background: #238636;
+      color: #fff;
+      border: 1px solid rgba(240, 246, 252, 0.1);
+    }
+    .btn-primary:hover {
+      background: #2ea043;
+    }
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+      background: #21262d;
+      border-color: #8b949e;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto 5rem;
+    }
+    .terminal-window {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+      margin-bottom: 4rem;
+    }
+    .terminal-header {
+      background: var(--surface);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .dots {
+      display: flex;
+      gap: 6px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .terminal-body {
+      padding: 1.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #e6edf3;
+      overflow-x: auto;
+    }
+    .status-bar {
+      background: #c9d1d9;
+      color: #0d1117;
+      padding: 0.2rem 0.6rem;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+    .footer-bar {
+      background: #30363d;
+      color: #f0f6fc;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.8rem;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+    .feature-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .feature-card h3 {
+      font-size: 1.15rem;
+      color: #f0f6fc;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    .shortcuts-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 4rem;
+    }
+    .shortcuts-section h2 {
+      font-size: 1.5rem;
+      color: #f0f6fc;
+      margin-bottom: 1.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    kbd {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 4px;
+      box-shadow: inset 0 -1px 0 #30363d;
+      color: #c9d1d9;
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 0.15rem 0.4rem;
+      margin: 0 0.1rem;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 0 4rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">⚛️ Minimalismo de Alta Precisão</div>
+    <h1>Kvant <span>(kv)</span></h1>
+    <p class="lead">Micro-editor de texto para terminal desenvolvido em Rust puro. Zero dependências externas, inicialização instantânea e navegação universal por teclado.</p>
+    <div class="actions">
+      <a href="https://codeberg.org/lumenpink/kvant" class="btn btn-primary">Repositório no Codeberg</a>
+      <a href="#atalhos" class="btn btn-secondary">Guia de Atalhos</a>
+    </div>
+  </header>
+
+  <main>
+    <div class="terminal-window">
+      <div class="terminal-header">
+        <div class="dots">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <div class="terminal-title">kvant — terminal session</div>
+      </div>
+      <div class="terminal-body">
+        <div># Documento de Trabalho — Gosplan</div>
+        <div>Este editor foi projetado para edição rápida e direta.</div>
+        <div>Você pode navegar com as setas ou via combinações Ctrl+ clássicas.</div>
+        <br>
+        <div>- Zero crates externas (Apenas Rust Std + POSIX termios).</div>
+        <div>- Binário autocontido com menos de 1 MB.</div>
+        <div>- Integração de primeira classe com o CCCP Divã.</div>
+        <div>~</div>
+        <div>~</div>
+        <div class="status-bar">
+          <span> Kvant | doc.md [+] - 7 linha(s)</span>
+          <span>Ln 4, Col 22 </span>
+        </div>
+        <div class="footer-bar">
+          ^S Salvar  ^X Sair  ^P/^N Linha  ^B/^F Cursor  ^A/^E Início/Fim  ^K Cortar
+        </div>
+      </div>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <h3>⚡ Zero Dependências</h3>
+        <p>Construído sem crates externas pesadas. Compilação ultrarrápida direto com a biblioteca padrão do Rust e syscalls POSIX nativas.</p>
+      </div>
+      <div class="feature-card">
+        <h3>⌨️ Navegação Universal</h3>
+        <p>Suporta setas do teclado e atalhos completos estilo Readline/Emacs (Ctrl+P, Ctrl+N, Ctrl+B, Ctrl+F, Ctrl+A, Ctrl+E) para quem não tem setas funcionais.</p>
+      </div>
+      <div class="feature-card">
+        <h3>🛡️ Autocontido & Estático</h3>
+        <p>Gera um binário único que pode ser copiado e executado em qualquer ambiente Linux/POSIX sem dependências dinâmicas no sistema operacional.</p>
+      </div>
+    </div>
+
+    <div class="shortcuts-section" id="atalhos">
+      <h2>Tabela de Atalhos de Teclado</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Atalho</th>
+            <th>Ação</th>
+            <th>Equivalente</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><kbd>Setas</kbd> ou <kbd>^P</kbd> / <kbd>^N</kbd></td>
+            <td>Mover Vertical</td>
+            <td>Linha Anterior (Cima) / Próxima Linha (Baixo)</td>
+          </tr>
+          <tr>
+            <td><kbd>Setas</kbd> ou <kbd>^B</kbd> / <kbd>^F</kbd></td>
+            <td>Mover Horizontal</td>
+            <td>Caractere Anterior (Esquerda) / Próximo (Direita)</td>
+          </tr>
+          <tr>
+            <td><kbd>Home</kbd> ou <kbd>^A</kbd></td>
+            <td>Início da Linha</td>
+            <td>Pula para o primeiro caractere da linha atual</td>
+          </tr>
+          <tr>
+            <td><kbd>End</kbd> ou <kbd>^E</kbd></td>
+            <td>Fim da Linha</td>
+            <td>Pula para o final da linha atual</td>
+          </tr>
+          <tr>
+            <td><kbd>PageUp</kbd> / <kbd>PageDn</kbd></td>
+            <td>Rolar Página</td>
+            <td>Rola uma tela inteira para cima ou para baixo</td>
+          </tr>
+          <tr>
+            <td><kbd>^K</kbd></td>
+            <td>Cortar Linha</td>
+            <td>Apaga do cursor até o final da linha</td>
+          </tr>
+          <tr>
+            <td><kbd>^U</kbd></td>
+            <td>Limpar Linha</td>
+            <td>Remove toda a linha atual</td>
+          </tr>
+          <tr>
+            <td><kbd>^D</kbd> ou <kbd>Delete</kbd></td>
+            <td>Deletar Frente</td>
+            <td>Apaga o caractere à frente do cursor</td>
+          </tr>
+          <tr>
+            <td><kbd>Backspace</kbd> ou <kbd>^H</kbd></td>
+            <td>Deletar Trás</td>
+            <td>Apaga o caractere anterior ao cursor</td>
+          </tr>
+          <tr>
+            <td><kbd>^S</kbd></td>
+            <td>Gravar Arquivo</td>
+            <td>Salva o buffer no disco</td>
+          </tr>
+          <tr>
+            <td><kbd>^X</kbd> ou <kbd>^Q</kbd></td>
+            <td>Sair</td>
+            <td>Encerra o editor (solicita confirmação se alterado)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="shortcuts-section">
+      <h2>Instalação Rápida</h2>
+      <pre style="background:var(--code-bg); padding:1rem; border-radius:8px; font-family:var(--font-mono); overflow-x:auto;">
+# Clonar e compilar via Cargo:
+git clone ssh://git@codeberg.org/lumenpink/kvant.git
+cd kvant
+cargo build --release
+cp target/release/kv ~/.local/bin/kv
+cp target/release/kvant ~/.local/bin/kvant
+      </pre>
+    </div>
+  </main>
+
+  <footer>
+    <p>Kvant (kv) é software livre sob licença <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache 2.0</a> (Domínio Público).</p>
+    <p>Desenvolvido para o ecossistema CCCP / Gosplan por <a href="https://lumen.pink">Lumen Pink</a>.</p>
+  </footer>
+
+</body>
+</html>
