@@ -67,11 +67,18 @@ jobs:
         with:
           toolchain: stable
 
-      - name: "Build Release Tarball"
+      - name: "Install 32-bit Multilib & Targets"
+        run: |
+          sudo apt-get update && sudo apt-get install -y gcc-multilib libc6-dev-i386
+          rustup target add i686-unknown-linux-gnu
+
+      - name: "Build Release Tarballs (64-bit & 32-bit)"
         run: |
           cargo build --release
+          cargo build --release --target i686-unknown-linux-gnu
           mkdir -p dist
           tar -czvf "dist/kv-linux-x86_64.tar.gz" -C target/release kv kvant
+          tar -czvf "dist/kv-linux-i686.tar.gz" -C target/i686-unknown-linux-gnu/release kv kvant
 
       - name: "Update Nightly Release Asset"
         env:
