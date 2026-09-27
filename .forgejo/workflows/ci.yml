@@ -133,7 +133,3 @@ jobs:
             wrangler deploy || echo "::warning::Cloudflare deploy failed. Continuing with fallback."
           fi
 
-      - name: "Deploy to Codeberg Pages (Fallback)"
-        uses: https://codeberg.org/actions/pages@v1
-        with:
-          path: site
