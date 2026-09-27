@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="100%" height="100%">
+  <defs>
+    <!-- Deep Red Enamel Gradient -->
+    <radialGradient id="sovietRed" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#cf2323"/>
+      <stop offset="70%" stop-color="#ad1818"/>
+      <stop offset="100%" stop-color="#730e0e"/>
+    </radialGradient>
+    
+    <!-- Rich Constructivist Gold Gradient -->
+    <linearGradient id="sovietGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe699"/>
+      <stop offset="35%" stop-color="#e5a924"/>
+      <stop offset="75%" stop-color="#b87d0e"/>
+      <stop offset="100%" stop-color="#7a4e03"/>
+    </linearGradient>
+
+    <!-- Metal Highlight -->
+    <linearGradient id="goldEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff5d6"/>
+      <stop offset="100%" stop-color="#996305"/>
+    </linearGradient>
+
+    <filter id="medalShadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#14110f" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#medalShadow)">
+    <!-- Heavy Octagonal Medal Base -->
+    <polygon points="120,6 198,38 230,120 198,202 120,234 42,202 10,120 42,38"
+             fill="url(#sovietGold)" stroke="#4d3202" stroke-width="2"/>
+
+    <!-- Inner Red Enamel Shield -->
+    <polygon points="120,15 190,44 219,120 190,196 120,225 50,196 21,120 50,44"
+             fill="url(#sovietRed)" stroke="url(#goldEdge)" stroke-width="2.5"/>
+
+    <!-- Top Solid 3D Faceted Soviet Star (Maciça) -->
+    <g transform="translate(120, 48)">
+      <!-- Star base shadow -->
+      <polygon points="0,-20 5.5,-5.5 20,-5.5 8.5,4 12.5,18 0,9.5 -12.5,18 -8.5,4 -20,-5.5 -5.5,-5.5"
+               fill="#4a0808"/>
+      <!-- Facets -->
+      <polygon points="0,0 0,-19 -5.5,-5.5" fill="#c48a12"/>
+      <polygon points="0,0 0,-19 5.5,-5.5" fill="#ffe082"/>
+      <polygon points="0,0 19,-5.5 5.5,-5.5" fill="#c48a12"/>
+      <polygon points="0,0 19,-5.5 8.5,4" fill="#ffd54f"/>
+      <polygon points="0,0 12.5,17 8.5,4" fill="#a06e09"/>
+      <polygon points="0,0 12.5,17 0,9.5" fill="#ffd54f"/>
+      <polygon points="0,0 -12.5,17 0,9.5" fill="#a06e09"/>
+      <polygon points="0,0 -12.5,17 -8.5,4" fill="#ffe082"/>
+      <polygon points="0,0 -19,-5.5 -8.5,4" fill="#c48a12"/>
+      <polygon points="0,0 -19,-5.5 -5.5,-5.5" fill="#ffe082"/>
+      <polygon points="0,-19 5.5,-5.5 19,-5.5 8.5,4 12.5,17 0,9.5 -12.5,17 -8.5,4 -19,-5.5 -5.5,-5.5"
+               fill="none" stroke="#533804" stroke-width="1.2"/>
+    </g>
+
+    <!-- KVANT TYPOGRAPHY (Constructivist Heavy Block Letters: KV) -->
+    <g fill="url(#sovietGold)" stroke="#380505" stroke-width="1.8" stroke-linejoin="round">
+      <!-- K -->
+      <path d="M 46,82 H 72 V 154 H 46 Z"/>
+      <polygon points="72,122 108,82 136,82 92,126"/>
+      <polygon points="88,118 136,154 108,154 72,126"/>
+      <!-- V -->
+      <polygon points="134,82 158,82 173,128 188,82 212,82 186,154 160,154"/>
+    </g>
+
+    <!-- Lower Agitprop Gold Banner Ribbon -->
+    <polygon points="29,168 211,168 200,196 40,196"
+             fill="#171514" stroke="url(#sovietGold)" stroke-width="2"/>
+    
+    <!-- Texto Perfeitamente Alinhado e Contido -->
+    <text x="120" y="186" text-anchor="middle"
+          font-family="'Oswald', 'Trebuchet MS', 'Impact', sans-serif"
+          font-size="11" font-weight="900" letter-spacing="1.5"
+          textLength="148" lengthAdjust="spacingAndGlyphs"
+          fill="url(#sovietGold)">KVANT // TEXT EDITOR</text>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+root = true
+
+# All files
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Shell scripts
+[*.sh]
+indent_style = space
+indent_size = 4
+
+# YAML (CI workflows)
+[*.yml]
+indent_style = space
+indent_size = 2
+
+# Markdown
+[*.md]
+trim_trailing_whitespace = false
+indent_style = space
+indent_size = 2
+
+# TOML / JSON / JSONC
+[*.{toml,json,jsonc}]
+indent_style = space
+indent_size = 2
