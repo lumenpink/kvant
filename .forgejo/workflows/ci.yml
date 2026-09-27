@@ -15,17 +15,13 @@ jobs:
   test:
     name: "Rust — Tests & Checks"
     runs-on: ubuntu-latest
+    container:
+      image: lumenpink/gost-ci-rust:latest
     steps:
       - name: "Checkout"
         uses: https://github.com/actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: "Install Rust Toolchain"
-        uses: https://github.com/actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          cache: false
 
       - name: "Cargo Check"
         run: cargo check --verbose
@@ -36,16 +32,12 @@ jobs:
   build-release:
     name: "Rust — Release Binaries"
     runs-on: ubuntu-latest
+    container:
+      image: lumenpink/gost-ci-rust:latest
     needs: [test]
     steps:
       - name: "Checkout"
         uses: https://github.com/actions/checkout@v4
-
-      - name: "Install Rust Toolchain"
-        uses: https://github.com/actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          cache: false
 
       - name: "Build Release"
         run: cargo build --release --verbose
@@ -58,29 +50,19 @@ jobs:
   publish-nightly:
     name: "Publish Nightly Release (Codeberg)"
     runs-on: ubuntu-latest
+    container:
+      image: lumenpink/gost-ci-cross:latest
     needs: [test, build-release]
     if: github.ref == 'refs/heads/main'
     steps:
       - name: "Checkout"
         uses: https://github.com/actions/checkout@v4
 
-      - name: "Install Rust Toolchain"
-        uses: https://github.com/actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          cache: false
-
-      - name: "Install 32-bit Multilib, ARM Cross & Targets"
-        run: |
-          sudo apt-get update && sudo apt-get install -y gcc-multilib libc6-dev-i386 gcc-arm-linux-gnueabihf
-          rustup target add i686-unknown-linux-gnu
-          rustup target add armv7-unknown-linux-gnueabihf
-
       - name: "Build Release Tarballs (64-bit, 32-bit x86, 32-bit ARM)"
         run: |
           cargo build --release
           cargo build --release --target i686-unknown-linux-gnu
-          CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc cargo build --release --target armv7-unknown-linux-gnueabihf
+          cargo build --release --target armv7-unknown-linux-gnueabihf
           mkdir -p dist
           tar -czvf "dist/kv-linux-x86_64.tar.gz" -C target/release kv kvant
           tar -czvf "dist/kv-linux-i686.tar.gz" -C target/i686-unknown-linux-gnu/release kv kvant
@@ -130,16 +112,13 @@ jobs:
   deploy-docs:
     name: "Deploy Documentation (kvant.2lp.in)"
     runs-on: ubuntu-latest
+    container:
+      image: lumenpink/gost-ci-deploy:latest
     needs: [test, build-release]
     if: github.ref == 'refs/heads/main'
     steps:
       - name: "Checkout"
         uses: https://github.com/actions/checkout@v4
-
-      - name: "Setup Node.js"
-        uses: https://github.com/actions/setup-node@v4
-        with:
-          node-version: 20
 
       - name: "Deploy to Cloudflare Workers (kvant.2lp.in)"
         env:
@@ -150,7 +129,7 @@ jobs:
             echo "::warning::Cloudflare credentials not configured in secrets. Skipping Cloudflare deploy."
           else
             echo "Publishing documentation to Cloudflare Workers..."
-            npx wrangler deploy || echo "::warning::Cloudflare deploy failed. Continuing with fallback."
+            wrangler deploy || echo "::warning::Cloudflare deploy failed. Continuing with fallback."
           fi
 
       - name: "Deploy to Codeberg Pages (Fallback)"
