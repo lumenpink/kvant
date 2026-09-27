@@ -9,5 +9,5 @@
 ### [nightly]
 
 ### Features
-  - initial project setup for kvant micro text editor
+  - (feat: initial project setup for kvant micro text editor (ref #2)) feat: initial project setup for kvant micro text editor (ref #2)
 
