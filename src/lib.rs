@@ -236,7 +236,42 @@ pub struct Editor {
     pub quit_confirmation: u8,
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum QuitDecision {
+    SaveAndQuit,
+    DiscardAndQuit,
+    Cancel,
+}
+
 impl Editor {
+    pub fn confirm_quit_action<F>(&mut self, mut key_reader: F) -> QuitDecision
+    where
+        F: FnMut() -> Key,
+    {
+        if !self.dirty {
+            return QuitDecision::DiscardAndQuit;
+        }
+
+        self.status_msg = String::from("⚠️ Alterações não salvas! [S]alvar e sair | [D]escartar | [C]ancelar");
+        let _ = self.render();
+
+        loop {
+            match key_reader() {
+                Key::Char('s') | Key::Char('S') => return QuitDecision::SaveAndQuit,
+                Key::Char('d') | Key::Char('D') => return QuitDecision::DiscardAndQuit,
+                Key::Char('c') | Key::Char('C') | Key::Escape => {
+                    self.status_msg = String::from("Operação cancelada.");
+                    return QuitDecision::Cancel;
+                }
+                Key::None => continue,
+                _ => {
+                    self.status_msg = String::from("Operação cancelada.");
+                    return QuitDecision::Cancel;
+                }
+            }
+        }
+    }
+
     pub fn new(filename: Option<String>) -> Self {
         let (cols, rows) = get_terminal_size();
         let screen_rows = if rows > 2 { rows - 2 } else { 1 };
@@ -497,7 +532,11 @@ impl Editor {
         output.push_str("\x1b[7m");
         let name = self.filename.as_deref().unwrap_or("[Sem Nome]");
         let dirty_flag = if self.dirty { " [+]" } else { "" };
-        let left_status = format!(" Kvant | {}{} - {} linha(s)", name, dirty_flag, self.rows.len());
+        let left_status = if !self.status_msg.is_empty() {
+            format!(" {}", self.status_msg)
+        } else {
+            format!(" Kvant | {}{} - {} linha(s)", name, dirty_flag, self.rows.len())
+        };
         let right_status = format!("Ln {}, Col {} ", self.cursor_y + 1, self.cursor_x + 1);
 
         let pad_len = if self.screen_cols > left_status.len() + right_status.len() {
@@ -617,12 +656,18 @@ pub fn run() {
 
         match read_key() {
             Key::Ctrl('x') | Key::Ctrl('q') => {
-                if editor.dirty && editor.quit_confirmation == 0 {
-                    editor.quit_confirmation = 1;
-                    editor.status_msg = String::from("⚠️ Alterações não salvas! Pressione ^X novamente para sair sem salvar.");
-                    continue;
+                match editor.confirm_quit_action(read_key) {
+                    QuitDecision::SaveAndQuit => {
+                        let _ = editor.save();
+                        break;
+                    }
+                    QuitDecision::DiscardAndQuit => {
+                        break;
+                    }
+                    QuitDecision::Cancel => {
+                        continue;
+                    }
                 }
-                break;
             }
             Key::Ctrl('s') => {
                 let _ = editor.save();
@@ -783,5 +828,51 @@ mod tests {
         editor.kill_entire_line();
         assert_eq!(editor.rows.len(), 1);
         assert_eq!(editor.rows[0], "first line");
+    }
+
+    #[test]
+    fn test_confirm_quit_clean_editor() {
+        let mut editor = Editor::new(None);
+        editor.dirty = false;
+        let decision = editor.confirm_quit_action(|| Key::None);
+        assert_eq!(decision, QuitDecision::DiscardAndQuit);
+    }
+
+    #[test]
+    fn test_confirm_quit_save() {
+        let mut editor = Editor::new(None);
+        editor.dirty = true;
+        let decision_s = editor.confirm_quit_action(|| Key::Char('s'));
+        assert_eq!(decision_s, QuitDecision::SaveAndQuit);
+
+        let decision_upper_s = editor.confirm_quit_action(|| Key::Char('S'));
+        assert_eq!(decision_upper_s, QuitDecision::SaveAndQuit);
+    }
+
+    #[test]
+    fn test_confirm_quit_discard() {
+        let mut editor = Editor::new(None);
+        editor.dirty = true;
+        let decision_d = editor.confirm_quit_action(|| Key::Char('d'));
+        assert_eq!(decision_d, QuitDecision::DiscardAndQuit);
+
+        let decision_upper_d = editor.confirm_quit_action(|| Key::Char('D'));
+        assert_eq!(decision_upper_d, QuitDecision::DiscardAndQuit);
+    }
+
+    #[test]
+    fn test_confirm_quit_cancel() {
+        let mut editor = Editor::new(None);
+        editor.dirty = true;
+
+        let decision_c = editor.confirm_quit_action(|| Key::Char('c'));
+        assert_eq!(decision_c, QuitDecision::Cancel);
+        assert!(editor.status_msg.contains("cancelada"));
+
+        let decision_esc = editor.confirm_quit_action(|| Key::Escape);
+        assert_eq!(decision_esc, QuitDecision::Cancel);
+
+        let decision_other = editor.confirm_quit_action(|| Key::Char('x'));
+        assert_eq!(decision_other, QuitDecision::Cancel);
     }
 }

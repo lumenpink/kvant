@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Routine maintenance, documentation updates, and operational improvements.
+### Features
+  - (ui) alertar e confirmar ao tentar sair com alteracoes (closes #1)
 
 ## Previous Releases
 
