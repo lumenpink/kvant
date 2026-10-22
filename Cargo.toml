@@ -24,3 +24,10 @@ name = "kv"
 path = "src/bin/kv.rs"
 
 [dependencies]
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
