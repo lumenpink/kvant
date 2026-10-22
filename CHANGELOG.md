@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+### Changed
+  - (build) otimizar tamanho de binario com profile.release e habilitar linking estatico musl crt-static (closes #10)
+
 ### Features
   - (ui) alertar e confirmar ao tentar sair com alteracoes (closes #1)
 
