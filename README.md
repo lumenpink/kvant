@@ -40,6 +40,14 @@ cp target/release/kvant ~/.local/bin/kvant
 
 ---
 
+## 4. Compilação Estática & Otimização de Tamanho
+
+O Kvant adota as diretrizes de engenharia soberana da norma GOST 1.5.0:
+* **Linking Estático musl:** Compilação com `-C target-feature=+crt-static`, gerando executáveis `static-pie` portáteis para qualquer distribuição Linux sem dependência de carregador dinâmico.
+* **Otimização Extrema:** Perfil `release` configurado com `opt-level = "z"`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` e descarte de símbolos (`strip = true`).
+
+---
+
 ## 3. Uso & Atalhos de Teclado
 
 ```bash
