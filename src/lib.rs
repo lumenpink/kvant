@@ -252,7 +252,8 @@ impl Editor {
             return QuitDecision::DiscardAndQuit;
         }
 
-        self.status_msg = String::from("⚠️ Alterações não salvas! [S]alvar e sair | [D]escartar | [C]ancelar");
+        self.status_msg =
+            String::from("⚠️ Alterações não salvas! [S]alvar e sair | [D]escartar | [C]ancelar");
         let _ = self.render();
 
         loop {
@@ -293,7 +294,8 @@ impl Editor {
         if let Some(ref path) = filename {
             if let Ok(content) = fs::read_to_string(path) {
                 editor.rows = content.lines().map(|s| s.to_string()).collect();
-                editor.status_msg = format!("Arquivo carregado: {} ({} linhas)", path, editor.rows.len());
+                editor.status_msg =
+                    format!("Arquivo carregado: {} ({} linhas)", path, editor.rows.len());
             }
         }
 
@@ -318,7 +320,11 @@ impl Editor {
 
         fs::write(path, content)?;
         self.dirty = false;
-        self.status_msg = format!("✓ Gravado com sucesso: {} ({} linhas)", path, self.rows.len());
+        self.status_msg = format!(
+            "✓ Gravado com sucesso: {} ({} linhas)",
+            path,
+            self.rows.len()
+        );
         Ok(())
     }
 
@@ -474,7 +480,11 @@ impl Editor {
 
     pub fn clamp_cursor(&mut self) {
         if self.cursor_y >= self.rows.len() {
-            self.cursor_y = if self.rows.is_empty() { 0 } else { self.rows.len() - 1 };
+            self.cursor_y = if self.rows.is_empty() {
+                0
+            } else {
+                self.rows.len() - 1
+            };
         }
         let line_len = if self.rows.is_empty() {
             0
@@ -535,7 +545,12 @@ impl Editor {
         let left_status = if !self.status_msg.is_empty() {
             format!(" {}", self.status_msg)
         } else {
-            format!(" Kvant | {}{} - {} linha(s)", name, dirty_flag, self.rows.len())
+            format!(
+                " Kvant | {}{} - {} linha(s)",
+                name,
+                dirty_flag,
+                self.rows.len()
+            )
         };
         let right_status = format!("Ln {}, Col {} ", self.cursor_y + 1, self.cursor_x + 1);
 
@@ -566,7 +581,10 @@ impl Editor {
         // 4. Place hardware cursor
         let cursor_screen_y = self.cursor_y - self.row_offset + 1;
         let cursor_screen_x = self.cursor_x - self.col_offset + 1;
-        output.push_str(&format!("\x1b[{};{}H\x1b[?25h", cursor_screen_y, cursor_screen_x));
+        output.push_str(&format!(
+            "\x1b[{};{}H\x1b[?25h",
+            cursor_screen_y, cursor_screen_x
+        ));
 
         let mut stdout = io::stdout();
         stdout.write_all(output.as_bytes())?;
@@ -655,20 +673,18 @@ pub fn run() {
         }
 
         match read_key() {
-            Key::Ctrl('x') | Key::Ctrl('q') => {
-                match editor.confirm_quit_action(read_key) {
-                    QuitDecision::SaveAndQuit => {
-                        let _ = editor.save();
-                        break;
-                    }
-                    QuitDecision::DiscardAndQuit => {
-                        break;
-                    }
-                    QuitDecision::Cancel => {
-                        continue;
-                    }
+            Key::Ctrl('x') | Key::Ctrl('q') => match editor.confirm_quit_action(read_key) {
+                QuitDecision::SaveAndQuit => {
+                    let _ = editor.save();
+                    break;
                 }
-            }
+                QuitDecision::DiscardAndQuit => {
+                    break;
+                }
+                QuitDecision::Cancel => {
+                    continue;
+                }
+            },
             Key::Ctrl('s') => {
                 let _ = editor.save();
                 editor.quit_confirmation = 0;
@@ -753,7 +769,8 @@ pub fn run() {
                 editor.quit_confirmation = 0;
             }
             Key::PageDown => {
-                editor.cursor_y = (editor.cursor_y + editor.screen_rows).min(editor.rows.len().saturating_sub(1));
+                editor.cursor_y =
+                    (editor.cursor_y + editor.screen_rows).min(editor.rows.len().saturating_sub(1));
                 editor.quit_confirmation = 0;
             }
             Key::None | Key::Escape | Key::Ctrl(_) => {
