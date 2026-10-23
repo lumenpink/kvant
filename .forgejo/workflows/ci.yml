@@ -75,7 +75,7 @@ jobs:
             VERSION="${REF#refs/tags/v}"
           else
             CHANNEL="nightly"
-            BASE_VER=$(head -n 1 VERSION 2>/dev/null | tr -d ' \r\n' || echo "0.1.0-dev")
+            BASE_VER=$(head -n 1 VERSION 2>/dev/null | cut -d'+' -f1 | tr -d ' \r\n' || echo "0.1.0-dev")
             GIT_SHA=$(git rev-parse --short HEAD)
             DATE_STAMP=$(date +%Y%m%d)
             VERSION="${BASE_VER}+${DATE_STAMP}.${GIT_SHA}"
