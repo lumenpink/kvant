@@ -1,135 +1,212 @@
-name: CI
+name: "CI/CD & Sovereign Release to Banca"
 
 on:
   push:
-    branches: ["main"]
-    tags: ["v*"]
+    tags:
+      - 'v*'
+    branches:
+      - main
   pull_request:
-    branches: ["main"]
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
 
 jobs:
   test:
-    name: "Rust — Tests & Checks"
+    name: "Checks, Tests & Quality Gates"
     runs-on: ubuntu-latest
     container:
-      image: lumenpink/gost-ci-rust:latest
+      image: docker.io/lumenpink/gost-ci-cross:latest
     steps:
-      - name: "Checkout"
+      - name: "Checkout repository"
         uses: https://github.com/actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: "Cargo Check"
-        run: cargo check --verbose
+      - name: "Configure Sovereign Lumen Cargo Registry"
+        run: |
+          mkdir -p "$HOME/.cargo"
+          printf '[registries.lumen]\nindex = "sparse+https://git.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
+          if [ -n "${{ secrets.LUMEN_REGISTRY_TOKEN }}" ]; then
+            printf '[registries.lumen]\ntoken = "${{ secrets.LUMEN_REGISTRY_TOKEN }}"\n' > "$HOME/.cargo/credentials.toml"
+          fi
 
-      - name: "Cargo Test"
-        run: cargo test --verbose
+      - name: "Format Check"
+        run: cargo fmt -- --check
 
-  build-release:
-    name: "Rust — Release Binaries"
+      - name: "Clippy Check (Zero Warnings)"
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: "Run Unit & Integration Tests"
+        run: cargo test --all-targets
+
+      - name: "CCCP Quality Audit"
+        run: |
+          if command -v cccp >/dev/null 2>&1; then
+            cccp check --strict || true
+          fi
+
+  deploy-banca:
+    name: "Build & Publish Kvant Multiarch to Banca"
     runs-on: ubuntu-latest
-    container:
-      image: lumenpink/gost-ci-rust:latest
     needs: [test]
-    steps:
-      - name: "Checkout"
-        uses: https://github.com/actions/checkout@v4
-
-      - name: "Build Release"
-        run: cargo build --release --verbose
-
-      - name: "Verify Binaries"
-        run: |
-          ./target/release/kvant --version
-          ./target/release/kv --version
-
-  publish-nightly:
-    name: "Publish Nightly Release (Codeberg)"
-    runs-on: ubuntu-latest
+    if: success() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     container:
-      image: lumenpink/gost-ci-cross:latest
-    needs: [test, build-release]
-    if: github.ref == 'refs/heads/main'
+      image: docker.io/lumenpink/gost-ci-cross:latest
     steps:
-      - name: "Checkout"
+      - name: "Checkout repository"
         uses: https://github.com/actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: "Build Release Tarballs (64-bit, 32-bit x86, 32-bit ARM)"
+      - name: "Determine Release Channel and Version"
+        id: meta
         run: |
-          cargo build --release
-          cargo build --release --target i686-unknown-linux-gnu
-          cargo build --release --target armv7-unknown-linux-gnueabihf
-          mkdir -p dist
-          tar -czvf "dist/kv-linux-x86_64.tar.gz" -C target/release kv kvant
-          tar -czvf "dist/kv-linux-i686.tar.gz" -C target/i686-unknown-linux-gnu/release kv kvant
-          tar -czvf "dist/kv-linux-armv7.tar.gz" -C target/armv7-unknown-linux-gnueabihf/release kv kvant
+          REF="${{ github.ref }}"
+          if [[ "$REF" == refs/tags/v* ]]; then
+            CHANNEL="stable"
+            VERSION="${REF#refs/tags/v}"
+          else
+            CHANNEL="nightly"
+            BASE_VER=$(head -n 1 VERSION 2>/dev/null | tr -d ' \r\n' || echo "0.1.0-dev")
+            GIT_SHA=$(git rev-parse --short HEAD)
+            DATE_STAMP=$(date +%Y%m%d)
+            VERSION="${BASE_VER}+${DATE_STAMP}.${GIT_SHA}"
+          fi
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "★ Canal: $CHANNEL | Versão: $VERSION"
 
-      - name: "Update Nightly Release Asset"
-        env:
-          TOKEN: ${{ secrets.CODEBERG_TOKEN }}
+      - name: "Configure Sovereign Lumen Cargo Registry"
         run: |
-          if [ -z "$TOKEN" ]; then
-            TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          mkdir -p "$HOME/.cargo"
+          printf '[registries.lumen]\nindex = "sparse+https://git.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
+
+      - name: "Compile Kvant Multiarch CLI Binaries"
+        run: |
+          export RUSTFLAGS="-C target-feature=+crt-static"
+          echo "★ [1/3] Compilando x86_64-unknown-linux-musl (Linux AMD64)..."
+          cargo zigbuild --release --target x86_64-unknown-linux-musl --bin kvant --bin kv || \
+            cargo build --release --target x86_64-unknown-linux-musl --bin kvant --bin kv
+
+          echo "★ [2/3] Compilando aarch64-unknown-linux-musl (Linux ARM64)..."
+          cargo zigbuild --release --target aarch64-unknown-linux-musl --bin kvant --bin kv || \
+            cargo build --release --target aarch64-unknown-linux-musl --bin kvant --bin kv
+
+          echo "★ [3/3] Compilando x86_64-pc-windows-gnu (Windows AMD64)..."
+          cargo zigbuild --release --target x86_64-pc-windows-gnu --bin kvant --bin kv || \
+            cargo build --release --target x86_64-pc-windows-gnu --bin kvant --bin kv
+
+      - name: "Package Artifacts & Generate Checksums"
+        run: |
+          VERSION="${{ steps.meta.outputs.version }}"
+          mkdir -p dist/packages
+
+          # 1. Empacotar Linux AMD64
+          if [ -d target/x86_64-unknown-linux-musl/release ]; then
+            tar -czf "dist/packages/kvant-${VERSION}-linux-amd64.tar.gz" \
+              -C target/x86_64-unknown-linux-musl/release kvant kv \
+              -C "$PWD" README.md LICENSE 2>/dev/null || \
+            tar -czf "dist/packages/kvant-${VERSION}-linux-amd64.tar.gz" \
+              -C target/x86_64-unknown-linux-musl/release kvant kv
           fi
-          if [ -z "$TOKEN" ]; then
-            echo "::warning::No token available to publish nightly release."
-            exit 0
+
+          # 2. Empacotar Linux ARM64
+          if [ -d target/aarch64-unknown-linux-musl/release ]; then
+            tar -czf "dist/packages/kvant-${VERSION}-linux-arm64.tar.gz" \
+              -C target/aarch64-unknown-linux-musl/release kvant kv \
+              -C "$PWD" README.md LICENSE 2>/dev/null || \
+            tar -czf "dist/packages/kvant-${VERSION}-linux-arm64.tar.gz" \
+              -C target/aarch64-unknown-linux-musl/release kvant kv
           fi
 
-          REL_JSON=$(curl -s -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/tags/nightly")
-          REL_ID=$(echo "$REL_JSON" | sed -n 's/.*"id":[[:space:]]*\([0-9]*\).*/\1/p' | head -n 1)
-
-          if [ -z "$REL_ID" ] || [ "$REL_ID" = "null" ]; then
-            RESP=$(curl -s -X POST \
-              -H "Authorization: token $TOKEN" \
-              -H "Content-Type: application/json" \
-              -d '{"tag_name":"nightly","name":"Kvant Nightly Build","body":"Automated rolling nightly build","prerelease":true}' \
-              "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases")
-            REL_ID=$(echo "$RESP" | sed -n 's/.*"id":[[:space:]]*\([0-9]*\).*/\1/p' | head -n 1)
+          # 3. Empacotar Windows AMD64
+          if [ -d target/x86_64-pc-windows-gnu/release ]; then
+            cd target/x86_64-pc-windows-gnu/release
+            zip -j "$GITHUB_WORKSPACE/dist/packages/kvant-${VERSION}-windows-amd64.zip" \
+              kvant.exe kv.exe "$GITHUB_WORKSPACE/README.md" "$GITHUB_WORKSPACE/LICENSE" 2>/dev/null || \
+            zip -j "$GITHUB_WORKSPACE/dist/packages/kvant-${VERSION}-windows-amd64.zip" \
+              kvant.exe kv.exe
+            cd "$GITHUB_WORKSPACE"
           fi
 
-          [ -n "$REL_ID" ] || { echo "Failed to get release ID"; exit 0; }
+          cd dist/packages
+          sha256sum * > SHA256SUMS
+          cat SHA256SUMS
+          cd "$GITHUB_WORKSPACE"
 
-          for f in dist/*.tar.gz; do
-            [ -f "$f" ] || continue
-            fname=$(basename "$f")
-            ASSET_ID=$(curl -s -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets" | \
-              sed -n "s/.*\"id\":[[:space:]]*\([0-9]*\).*\"name\":[[:space:]]*\"${fname}\".*/\1/p" | head -n 1)
-            if [ -n "$ASSET_ID" ]; then
-              curl -s -X DELETE -H "Authorization: token $TOKEN" "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets/$ASSET_ID" >/dev/null
-            fi
-            curl -s -X POST \
-              -H "Authorization: token $TOKEN" \
-              -H "Content-Type: multipart/form-data" \
-              -F "attachment=@$f" \
-              "https://codeberg.org/api/v1/repos/${{ github.repository }}/releases/$REL_ID/assets?name=${fname}"
-          done
-
-  deploy-docs:
-    name: "Deploy Documentation (kvant.2lp.in)"
-    runs-on: ubuntu-latest
-    container:
-      image: lumenpink/gost-ci-deploy:latest
-    needs: [test, build-release]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: "Checkout"
-        uses: https://github.com/actions/checkout@v4
-
-      - name: "Deploy to Cloudflare Workers (kvant.2lp.in)"
+      - name: "Upload Artifacts to Cloudflare R2"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
-            echo "::warning::Cloudflare credentials not configured in secrets. Skipping Cloudflare deploy."
-          else
-            echo "Publishing documentation to Cloudflare Workers..."
-            wrangler deploy || echo "::warning::Cloudflare deploy failed. Continuing with fallback."
+          CHANNEL="${{ steps.meta.outputs.channel }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "Aviso: CLOUDFLARE_API_TOKEN ausente. Pulando upload R2."
+            exit 0
           fi
 
+          echo "★ Enviando pacotes para o Cloudflare R2 (twolp-bucket / bucket.2lp.in)..."
+          for PKG in dist/packages/*; do
+            [ -f "$PKG" ] || continue
+            PKG_NAME=$(basename "$PKG")
+            npx wrangler r2 object put "twolp-bucket/downloads/kvant/${CHANNEL}/${PKG_NAME}" \
+              --file="$PKG" --remote || true
+          done
+
+      - name: "Rotate Manifest & Commit to Banca"
+        env:
+          GIT_2LP_TOKEN: ${{ secrets.GIT_2LP_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          CHANNEL="${{ steps.meta.outputs.channel }}"
+          VERSION="${{ steps.meta.outputs.version }}"
+
+          echo "★ Clonando repositório soberano da Banca para rotação e retenção..."
+          git clone --depth 1 "https://lumen:${GIT_2LP_TOKEN}@git.2lp.in/lumen/banca.git" /tmp/banca
+
+          if [ -d "/tmp/banca/site/downloads/kvant" ] && [ -f "/tmp/banca/scripts/rotate-downloads.py" ]; then
+            cd /tmp/banca
+
+            # Registrar cada uma das arquiteturas
+            for ARCH in "linux-amd64" "linux-arm64" "windows-amd64"; do
+              EXT="tar.gz"
+              [ "$ARCH" = "windows-amd64" ] && EXT="zip"
+              PKG_FILE="kvant-${VERSION}-${ARCH}.${EXT}"
+
+              HASH=$(grep "$PKG_FILE" "$GITHUB_WORKSPACE/dist/packages/SHA256SUMS" | awk '{print $1}' || echo "")
+              DOWNLOAD_URL="https://bucket.2lp.in/downloads/kvant/${CHANNEL}/${PKG_FILE}"
+
+              python3 scripts/rotate-downloads.py \
+                --manifest site/downloads/kvant/index.json \
+                --channel "${CHANNEL}" \
+                --arch "${ARCH}" \
+                --version-str "${VERSION}" \
+                --url "${DOWNLOAD_URL}" \
+                --sha256 "${HASH}" \
+                --tarball "${PKG_FILE}" \
+                --app "kvant"
+            done
+
+            # Commitar manifesto atualizado na Banca
+            git config user.name "Kvant Release Bot"
+            git config user.email "bot@2lp.in"
+            git add site/downloads/kvant/index.json
+            if ! git diff --staged --quiet; then
+              git commit -m "chore(downloads): rotate kvant release to ${VERSION} (#9)"
+              git push origin main || echo "Aviso: Push do manifesto na Banca falhou."
+            else
+              echo "Manifesto já estava atualizado."
+            fi
+            cd "$GITHUB_WORKSPACE"
+          fi

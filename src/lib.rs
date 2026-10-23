@@ -334,13 +334,11 @@ impl Editor {
         }
 
         let row = &mut self.rows[self.cursor_y];
-        let mut char_idx = 0;
         let mut byte_idx = 0;
-        for ch in row.chars() {
+        for (char_idx, ch) in row.chars().enumerate() {
             if char_idx == self.cursor_x {
                 break;
             }
-            char_idx += 1;
             byte_idx += ch.len_utf8();
         }
 
@@ -359,13 +357,11 @@ impl Editor {
         }
 
         let row = &mut self.rows[self.cursor_y];
-        let mut char_idx = 0;
         let mut byte_idx = 0;
-        for ch in row.chars() {
+        for (char_idx, ch) in row.chars().enumerate() {
             if char_idx == self.cursor_x {
                 break;
             }
-            char_idx += 1;
             byte_idx += ch.len_utf8();
         }
 
@@ -383,15 +379,13 @@ impl Editor {
 
         if self.cursor_x > 0 {
             let row = &mut self.rows[self.cursor_y];
-            let mut char_idx = 0;
             let mut byte_idx = 0;
             let mut prev_byte_idx = 0;
-            for ch in row.chars() {
+            for (char_idx, ch) in row.chars().enumerate() {
                 if char_idx == self.cursor_x {
                     break;
                 }
                 prev_byte_idx = byte_idx;
-                char_idx += 1;
                 byte_idx += ch.len_utf8();
             }
 
@@ -416,13 +410,11 @@ impl Editor {
         let row_len = self.rows[self.cursor_y].chars().count();
         if self.cursor_x < row_len {
             let row = &mut self.rows[self.cursor_y];
-            let mut char_idx = 0;
             let mut byte_idx = 0;
-            for ch in row.chars() {
+            for (char_idx, ch) in row.chars().enumerate() {
                 if char_idx == self.cursor_x {
                     break;
                 }
-                char_idx += 1;
                 byte_idx += ch.len_utf8();
             }
             row.remove(byte_idx);
@@ -440,13 +432,11 @@ impl Editor {
             return;
         }
         let row = &mut self.rows[self.cursor_y];
-        let mut char_idx = 0;
         let mut byte_idx = 0;
-        for ch in row.chars() {
+        for (char_idx, ch) in row.chars().enumerate() {
             if char_idx == self.cursor_x {
                 break;
             }
-            char_idx += 1;
             byte_idx += ch.len_utf8();
         }
 
