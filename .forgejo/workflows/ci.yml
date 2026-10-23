@@ -100,9 +100,10 @@ jobs:
           cargo zigbuild --release --target aarch64-unknown-linux-musl --bin kvant --bin kv || \
             cargo build --release --target aarch64-unknown-linux-musl --bin kvant --bin kv
 
-          echo "★ [3/3] Compilando x86_64-pc-windows-gnu (Windows AMD64)..."
+          echo "★ [3/3] Compilando x86_64-pc-windows-gnu (Windows AMD64 - Best effort)..."
           cargo zigbuild --release --target x86_64-pc-windows-gnu --bin kvant --bin kv || \
-            cargo build --release --target x86_64-pc-windows-gnu --bin kvant --bin kv
+            cargo build --release --target x86_64-pc-windows-gnu --bin kvant --bin kv || \
+            echo "Aviso: Build Windows ignorado (requer subsistema Win32/POSIX)"
 
       - name: "Package Artifacts & Generate Checksums"
         run: |
@@ -128,7 +129,7 @@ jobs:
           fi
 
           # 3. Empacotar Windows AMD64
-          if [ -d target/x86_64-pc-windows-gnu/release ]; then
+          if [ -d target/x86_64-pc-windows-gnu/release ] && [ -f target/x86_64-pc-windows-gnu/release/kvant.exe ]; then
             cd target/x86_64-pc-windows-gnu/release
             zip -j "$GITHUB_WORKSPACE/dist/packages/kvant-${VERSION}-windows-amd64.zip" \
               kvant.exe kv.exe "$GITHUB_WORKSPACE/README.md" "$GITHUB_WORKSPACE/LICENSE" 2>/dev/null || \
@@ -178,10 +179,9 @@ jobs:
           if [ -d "/tmp/banca/site/downloads/kvant" ] && [ -f "/tmp/banca/scripts/rotate-downloads.py" ]; then
             cd /tmp/banca
 
-            # Registrar cada uma das arquiteturas
-            for ARCH in "linux-amd64" "linux-arm64" "windows-amd64"; do
+            # Registrar cada uma das arquiteturas presentes
+            for ARCH in "linux-amd64" "linux-arm64"; do
               EXT="tar.gz"
-              [ "$ARCH" = "windows-amd64" ] && EXT="zip"
               PKG_FILE="kvant-${VERSION}-${ARCH}.${EXT}"
 
               HASH=$(grep "$PKG_FILE" "$GITHUB_WORKSPACE/dist/packages/SHA256SUMS" | awk '{print $1}' || echo "")
@@ -197,6 +197,21 @@ jobs:
                 --tarball "${PKG_FILE}" \
                 --app "kvant"
             done
+
+            if [ -f "$GITHUB_WORKSPACE/dist/packages/kvant-${VERSION}-windows-amd64.zip" ]; then
+              PKG_FILE="kvant-${VERSION}-windows-amd64.zip"
+              HASH=$(grep "$PKG_FILE" "$GITHUB_WORKSPACE/dist/packages/SHA256SUMS" | awk '{print $1}' || echo "")
+              DOWNLOAD_URL="https://bucket.2lp.in/downloads/kvant/${CHANNEL}/${PKG_FILE}"
+              python3 scripts/rotate-downloads.py \
+                --manifest site/downloads/kvant/index.json \
+                --channel "${CHANNEL}" \
+                --arch "windows-amd64" \
+                --version-str "${VERSION}" \
+                --url "${DOWNLOAD_URL}" \
+                --sha256 "${HASH}" \
+                --tarball "${PKG_FILE}" \
+                --app "kvant"
+            fi
 
             # Commitar manifesto atualizado na Banca
             git config user.name "Kvant Release Bot"
