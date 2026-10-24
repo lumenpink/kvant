@@ -1460,13 +1460,13 @@ canonical_url: "https://gostlumen.2lp.in/profile.md"
 * **Perfil Pai:** `https://kollontai.2lp.in/profile.md` (Kollontai)
 * **Precedência:** Qualquer regra explicitada neste documento tem precedência estrita sobre o perfil pai. Todas as regras não mencionadas aqui são herdadas automaticamente do Kollontai e da norma central GOST.
 * **Domínio Canônico:** `https://gostlumen.2lp.in`
-* **Forja Primária Soberana:** Forgejo em `git.2lp.in` (`https://git.2lp.in/lumen/<repo>`)
-* **Remote Git SSH Padrão:** `git@git.2lp.in:lumen/<repo>.git` (Porta 22 padrão via SSH shim do host).
+* **Forja Primária Soberana:** Forgejo em `gambi.2lp.in` (`https://gambi.2lp.in/lumen/<repo>`)
+* **Remote Git SSH Padrão:** `git@gambi.2lp.in:lumen/<repo>.git` (Porta 22 padrão via SSH shim do host).
 * **Política de Push Mirrors Duplos (Vitrine Aberta):**
-  - Todo repositório público hospedado no `git.2lp.in` opera com **Push Mirror** automatizado imediato a cada commit (`sync_on_commit: true`) para:
+  - Todo repositório público hospedado no `gambi.2lp.in` opera com **Push Mirror** automatizado imediato a cada commit (`sync_on_commit: true`) para:
     1. **Espelho FOSS:** Codeberg (`https://codeberg.org/lumenpink/<repo>`)
     2. **Espelho Comunitário:** GitHub (`https://github.com/lumenpink/<repo>`)
-  - O desenvolvedor realiza commits e pushes locais exclusivamente para o `origin` (`git@git.2lp.in:lumen/<repo>.git`). A replicação para os espelhos externos é responsabilidade da forja soberana.
+  - O desenvolvedor realiza commits e pushes locais exclusivamente para o `origin` (`git@gambi.2lp.in:lumen/<repo>.git`). A replicação para os espelhos externos é responsabilidade da forja soberana.
 
 ---
 
