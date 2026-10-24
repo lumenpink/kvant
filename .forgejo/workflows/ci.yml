@@ -15,9 +15,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
-
 jobs:
   test:
     name: "Checks, Tests & Quality Gates"
