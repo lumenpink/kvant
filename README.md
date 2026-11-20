@@ -88,8 +88,12 @@ Caso `kv` ou `kvant` estejam no seu `$PATH`, o Divã abre o editor diretamente p
 
 ## 5. Licença & Matriz Modular
 
-Em conformidade com a norma técnica [GOST v1.1.0](.gost/GOST.md):
+Em conformidade com a norma técnica [GOST v3.0.0](.gost/GOST.md):
 
 * **Código-Fonte e Binário CLI (`src/`):** Licenciados sob a [Apache License 2.0 (Apache-2.0)](LICENSE).
 * **Identidade Visual, Emblema e Insígnia (`site/assets/logo.svg`):** Licenciados sob a [Creative Commons Atribuição-SemDerivações 4.0 Internacional (CC-BY-ND 4.0)](LICENSE-LOGO).
 * **Mídias e Ilustrações:** Licenciados sob a [Creative Commons Atribuição-CompartilhaIgual 4.0 Internacional (CC-BY-SA 4.0)](LICENSE-MEDIA).
+
+---
+
+Feito com amor travesti por [Lumen Pink](https://lumen.pink).

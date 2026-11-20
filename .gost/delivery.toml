@@ -1,0 +1,5 @@
+# Manifesto Declarativo de Continuous Deployment (CD) — Kvant
+# Conforme convenções de presença ativa da Metanorma GOST v3.0
+
+[binaries]
+target = "banca"

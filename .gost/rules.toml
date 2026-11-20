@@ -1,0 +1,715 @@
+[rules.KOLLONTAI-001]
+description = "README.md must have at most 50 lines of concise documentation"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-001"
+name = "README-MAX-LINES"
+scope = "project"
+script = """
+if not gost.file_exists("README.md") then
+    return true
+end
+local content = gost.read_file("README.md")
+local lines = gost.count_lines(content)
+if lines > 50 then
+    return false, "ERR_README_EXCEEDS_50_LINES", { lines = lines }
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-001.messages]
+ERR_README_EXCEEDS_50_LINES = "README.md exceeds 50 lines (found {lines} lines). Keep README concise and link to docs/ for details."
+
+[rules.KOLLONTAI-002]
+description = "Product banner must adhere to canonical 1200x630 dimensions (1.91:1 ratio)"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-002"
+name = "BANNER-DIMENSIONS-AND-RATIO"
+scope = "project"
+script = """
+local candidates = {"assets/banner.png", "site/assets/banner.png", "banner.png"}
+local found = false
+for _, p in ipairs(candidates) do
+    if gost.file_exists(p) then
+        found = true
+        break
+    end
+end
+if not found then
+    return true
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-002.messages]
+ERR_BANNER_DIMENSIONS_INVALID = "Product banner does not match 1200x630 dimensions or safe zone requirements"
+
+[rules.KOLLONTAI-003]
+description = "Core domain logic in src/domain/ must not import I/O, network or database drivers"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-003"
+name = "DDD-DOMAIN-PURITY"
+scope = "project"
+script = """
+if not gost.is_dir("src/domain") then
+    return true
+end
+local files = gost.list_files("src/domain") or {}
+for _, file in ipairs(files) do
+    if file:match("%.rs$") or file:match("%.go$") or file:match("%.py$") then
+        local content = gost.read_file(file) or ""
+        if content:match("std::net") or content:match("std::fs") or content:match("net/http") or content:match("database/sql") then
+            return false, "ERR_DOMAIN_IMPURE_IMPORT", { file = file }
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-003.messages]
+ERR_DOMAIN_IMPURE_IMPORT = "Domain purity violation: file '{file}' imports external I/O or network packages"
+
+[rules.KOLLONTAI-004]
+description = "CI workflow must enforce zero compiler/linter warnings (-D warnings or strict flags)"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-004"
+name = "STATIC-ANALYSIS-ZERO-WARNINGS"
+scope = "ci"
+script = """
+local ci = ".forgejo/workflows/ci.yml"
+if gost.file_exists(ci) then
+    local content = gost.read_file(ci) or ""
+    if not (content:match("%-D warnings") or content:match("%-%-strict") or content:match("deny")) then
+        return false, "ERR_CI_ZERO_WARNINGS_NOT_ENFORCED", {}
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-004.messages]
+ERR_CI_ZERO_WARNINGS_NOT_ENFORCED = "CI workflow does not explicitly enforce zero compiler/linter warnings"
+
+[rules.KOLLONTAI-005]
+description = "CI workflow must verify deterministic code formatting (fmt --check)"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-005"
+name = "FORMAT-CHECK-DETERMINISTIC"
+scope = "ci"
+script = """
+local ci = ".forgejo/workflows/ci.yml"
+if gost.file_exists(ci) then
+    local content = gost.read_file(ci) or ""
+    if not (content:match("fmt%s+%-%-check") or content:match("prettier%s+%-%-check") or content:match("black%s+%-%-check")) then
+        return false, "ERR_CI_FORMAT_CHECK_NOT_ENFORCED", {}
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-005.messages]
+ERR_CI_FORMAT_CHECK_NOT_ENFORCED = "CI workflow does not execute deterministic code formatting check"
+
+[rules.KOLLONTAI-006]
+description = "Static site must include security headers in site/_headers"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-006"
+name = "SITE-SECURITY-HEADERS"
+scope = "project"
+script = """
+if not gost.is_dir("site") then
+    return true
+end
+local headers = "site/_headers"
+if not gost.file_exists(headers) then
+    return false, "ERR_SECURITY_HEADERS_MISSING", {}
+end
+local content = gost.read_file(headers) or ""
+if not (content:match("X%-Frame%-Options") and content:match("X%-Content%-Type%-Options")) then
+    return false, "ERR_SECURITY_HEADERS_INCOMPLETE", {}
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-006.messages]
+ERR_SECURITY_HEADERS_INCOMPLETE = "site/_headers must include X-Frame-Options and X-Content-Type-Options"
+ERR_SECURITY_HEADERS_MISSING = "Mandatory site security configuration 'site/_headers' is missing"
+
+[rules.KOLLONTAI-007]
+description = "Compose specification must define unprivileged user '1000:1000'"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-007"
+name = "COMPOSE-NON-ROOT-USER"
+scope = "project"
+script = """
+local compose_files = {"compose.yaml", "docker-compose.yml"}
+for _, path in ipairs(compose_files) do
+    if gost.file_exists(path) then
+        local content = gost.read_file(path) or ""
+        if not (content:match('user:%s*"1000:1000"') or content:match("user:%s*'1000:1000'") or content:match("user:%s*1000:1000")) then
+            return false, "ERR_COMPOSE_NON_ROOT_MISSING", { file = path }
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-007.messages]
+ERR_COMPOSE_NON_ROOT_MISSING = "Compose specification in '{file}' must declare unprivileged user '1000:1000'"
+
+[rules.KOLLONTAI-008]
+description = "Compose specification must declare healthcheck probes"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-008"
+name = "COMPOSE-HEALTHCHECK-REQUIRED"
+scope = "project"
+script = """
+local compose_files = {"compose.yaml", "docker-compose.yml"}
+for _, path in ipairs(compose_files) do
+    if gost.file_exists(path) then
+        local content = gost.read_file(path) or ""
+        if not content:match("healthcheck:") then
+            return false, "ERR_COMPOSE_HEALTHCHECK_MISSING", { file = path }
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-008.messages]
+ERR_COMPOSE_HEALTHCHECK_MISSING = "Compose specification in '{file}' must declare a healthcheck probe"
+
+[rules.KOLLONTAI-009]
+description = "Dockerfile must declare non-root user (USER 1000:1000)"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-009"
+name = "DOCKERFILE-NON-ROOT-USER"
+scope = "project"
+script = '''
+if gost.file_exists("Dockerfile") then
+    local content = gost.read_file("Dockerfile") or ""
+    if not (content:match("USER%s+1000:1000") or content:match("USER%s+1000") or content:match("user:%s*\"1000:1000\"")) then
+        return false, "ERR_DOCKERFILE_NON_ROOT_MISSING", { file = "Dockerfile" }
+    end
+end
+return true
+'''
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-009.messages]
+ERR_DOCKERFILE_NON_ROOT_MISSING = "Dockerfile must declare unprivileged user 'USER 1000:1000'"
+
+[rules.KOLLONTAI-010]
+description = "API contract files must be valid OpenAPI 3.x specifications"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-010"
+name = "API-CONTRACT-OPENAPI"
+scope = "project"
+script = """
+if gost.file_exists("docs/openapi.yaml") then
+    local content = gost.read_file("docs/openapi.yaml") or ""
+    if not content:match("openapi:%s*3%.") then
+        return false, "ERR_OPENAPI_SPEC_INVALID", { file = "docs/openapi.yaml" }
+    end
+end
+if gost.is_dir("docs/external") then
+    local files = gost.list_files("docs/external") or {}
+    for _, file in ipairs(files) do
+        if file:match("%.ya?ml$") then
+            local content = gost.read_file(file) or ""
+            if not content:match("openapi:%s*3%.") then
+                return false, "ERR_OPENAPI_SPEC_INVALID", { file = file }
+            end
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-010.messages]
+ERR_OPENAPI_SPEC_INVALID = "API contract schema in '{file}' must declare OpenAPI 3.x ('openapi: 3.x.x')"
+
+[rules.KOLLONTAI-011]
+description = "Documentation and markdown files must not contain prohibited terms"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-011"
+name = "FORBIDDEN-TERMS"
+scope = "docs"
+script = """
+local files = gost.list_files("docs") or {}
+for _, file in ipairs(files) do
+    if file:match("%.md$") then
+        local content = gost.read_file(file) or ""
+        if content:lower():match("soberan") then
+            return false, "ERR_FORBIDDEN_TERM_FOUND", { file = file }
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-011.messages]
+ERR_FORBIDDEN_TERM_FOUND = "Forbidden term found in documentation file '{file}'"
+
+[rules.KOLLONTAI-012]
+description = "Compiled binary artifacts must pass a basic smoke test without SIGSEGV or panic"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-012"
+name = "SMOKE-TEST-SANITY-POST-BUILD"
+scope = "post-build"
+script = """
+local bin = gost.target_binary()
+if not bin or bin == "" then
+    return true
+end
+
+local res = gost.exec_artifact(bin, { "--help" }, 3000)
+if not res.ok then
+    if res.signal == 11 or res.exit_code == 139 then
+        return false, "ERR_SMOKE_SEGFAULT", { binary = bin }
+    elseif res.stderr and res.stderr:match("panicked at") then
+        return false, "ERR_SMOKE_PANIC", { binary = bin, error = res.stderr }
+    else
+        return false, "ERR_SMOKE_EXEC_FAILED", { binary = bin, exit_code = res.exit_code or -1 }
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-012.messages]
+ERR_SMOKE_EXEC_FAILED = "Post-build smoke test failed: binary '{binary}' exited with non-zero status ({exit_code})"
+ERR_SMOKE_PANIC = "Post-build smoke test failed: binary '{binary}' panicked on startup: {error}"
+ERR_SMOKE_SEGFAULT = "Post-build smoke test failed: binary '{binary}' terminated with Segmentation Fault (SIGSEGV)"
+
+[rules.KOLLONTAI-013]
+description = "Internationalization dictionary key parity across declared languages in GOSTVER"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-013"
+name = "INTL-KEY-PARITY"
+scope = "project"
+script = """
+local gostver = gost.read_file("GOSTVER") or ""
+local langs = gostver:match("LANGUAGES%s*=%s*([%w,]+)")
+if not langs or langs == "" or langs == "ALL" then
+    return true
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-013.messages]
+ERR_INTL_PARITY_MISMATCH = "Translation dictionaries do not share key parity for declared languages"
+
+[rules.KOLLONTAI-014]
+description = "CSS logical properties and dir=rtl must be used when RTL languages are declared"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-014"
+name = "RTL-LOGICAL-PROPERTIES-AUDIT"
+scope = "project"
+script = """
+local gostver = gost.read_file("GOSTVER") or ""
+local langs = gostver:match("LANGUAGES%s*=%s*([%w,]+)")
+if not langs then
+    return true
+end
+if langs:match("ar") or langs:match("he") or langs:match("fa") or langs:match("ur") then
+    if gost.is_dir("site") then
+        local html_files = gost.list_files("site") or {}
+        local has_rtl_support = false
+        for _, f in ipairs(html_files) do
+            if f:match("%.html$") or f:match("%.css$") then
+                local content = gost.read_file(f) or ""
+                if content:match("dir=") or content:match("margin%-inline") or content:match("padding%-inline") then
+                    has_rtl_support = true
+                    break
+                end
+            end
+        end
+        if not has_rtl_support then
+            return false, "ERR_RTL_SUPPORT_MISSING", {}
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-014.messages]
+ERR_RTL_SUPPORT_MISSING = "RTL language declared in GOSTVER but site lacks CSS logical properties or dir='rtl'"
+
+[rules.KOLLONTAI-015]
+description = "Client router must adopt English (en) as default fallback when visitor browser language is unavailable"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-015"
+name = "I18N-SITE-FALLBACK-ENGLISH"
+scope = "project"
+script = """
+if not gost.is_dir("site") then
+    return true
+end
+local router_files = {"site/router.js", "site/index.html", "site/assets/app.js"}
+for _, p in ipairs(router_files) do
+    if gost.file_exists(p) then
+        local content = gost.read_file(p) or ""
+        if content:match("fallback") and not content:match('"en"') and not content:match("'en'") then
+            return false, "ERR_FALLBACK_NOT_ENGLISH", { file = p }
+        end
+    end
+end
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-015.messages]
+ERR_FALLBACK_NOT_ENGLISH = "Website router in '{file}' must configure English ('en') as default fallback language"
+
+[rules.KOLLONTAI-016]
+description = "Package manifests must not contain local filesystem path dependencies (path = '...')"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-016"
+name = "FORBIDDEN-PATH-DEPENDENCIES"
+scope = "project"
+script = '''
+local manifests = {"Cargo.toml", "package.json", "go.mod", "pyproject.toml"}
+for _, m in ipairs(manifests) do
+    if gost.file_exists(m) then
+        local content = gost.read_file(m) or ""
+        if m == "Cargo.toml" and (content:match('path%s*=%s*["\']%s*%.%.') or content:match('path%s*=%s*["\']%s*/')) then
+            return false, "ERR_PATH_DEPENDENCY_FORBIDDEN", { file = m }
+        end
+        if m == "package.json" and (content:match('"file:') or content:match('"link:')) then
+            return false, "ERR_PATH_DEPENDENCY_FORBIDDEN", { file = m }
+        end
+    end
+end
+return true
+'''
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-016.messages]
+ERR_PATH_DEPENDENCY_FORBIDDEN = "Local filesystem path dependency detected in manifest '{file}'. Use canonical package registries."
+
+[rules.KOLLONTAI-017]
+description = "Repositories must have an authorized root LICENSE (GPL-3.0 by default) and compliant modular satellites"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-017"
+name = "LICENSING-MATRIX-COMPLIANCE"
+scope = "project"
+script = """
+local license_content = nil
+local license_file = nil
+if gost.file_exists("LICENSE") then
+    license_content = gost.read_file("LICENSE")
+    license_file = "LICENSE"
+elseif gost.file_exists("LICENSE.md") then
+    license_content = gost.read_file("LICENSE.md")
+    license_file = "LICENSE.md"
+end
+
+if not license_content or license_content:match("^%s*$") then
+    return false, "ERR_LICENSE_FILE_MISSING", { file = "LICENSE" }
+end
+
+local lower = license_content:lower()
+local valid_root = false
+if lower:match("general public license") or lower:match("gnu affero") or lower:match("gpl") then
+    valid_root = true
+elseif lower:match("apache license") and (lower:match("2%.0") or lower:match("version 2")) then
+    valid_root = true
+elseif lower:match("creative commons") and (lower:match("sharealike") or lower:match("by%-sa")) then
+    valid_root = true
+end
+
+if not valid_root then
+    return false, "ERR_LICENSE_INVALID_SPDX", { file = license_file }
+end
+
+-- Validate satellites if present
+local satellites = {
+    ["LICENSE-MEDIA"] = { "creative commons", "by%-sa" },
+    ["LICENSE-LOGO"] = { "creative commons", "by%-nd" },
+    ["LICENSE-APACHE"] = { "apache license" },
+}
+
+for sat_name, required_patterns in pairs(satellites) do
+    if gost.file_exists(sat_name) then
+        local sat_content = (gost.read_file(sat_name) or ""):lower()
+        for _, pat in ipairs(required_patterns) do
+            if not sat_content:match(pat) then
+                return false, "ERR_SATELLITE_LICENSE_INVALID", { file = sat_name }
+            end
+        end
+    end
+end
+
+return true
+"""
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-017.messages]
+ERR_LICENSE_FILE_MISSING = "Root license file '{file}' is required but was not found"
+ERR_LICENSE_INVALID_SPDX = "Root license in '{file}' must be an authorized GOST license (GPL-3.0, AGPL-3.0, Apache-2.0 or CC-BY-SA-4.0)"
+ERR_SATELLITE_LICENSE_INVALID = "Modular satellite license '{file}' does not match required canonical terms"
+
+[rules.KOLLONTAI-018]
+description = "Git hooks must be installed and actively managed by the cccp maestro"
+docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-018"
+name = "GIT-HOOKS-MAESTRO-PARITY"
+scope = "project"
+script = '''
+-- If not a git repository (e.g. source tarball or CI container export), skip
+if not gost.is_dir(".git") and not gost.file_exists(".git") then
+    return true
+end
+
+-- Resolve hooks directory from .git/config (core.hooksPath) or default to .git/hooks
+local hooks_dir = ".git/hooks"
+if gost.file_exists(".git/config") then
+    local cfg = gost.read_file(".git/config") or ""
+    local custom_hooks = cfg:match("hooksPath%s*=%s*([^\r\n]+)")
+    if custom_hooks then
+        custom_hooks = custom_hooks:gsub('^%s*[\'"]?', ''):gsub('[\'"]?%s*$', '')
+        if custom_hooks ~= "" then
+            hooks_dir = custom_hooks
+        end
+    end
+end
+
+-- Essential hooks managed by the maestro
+local required_hooks = { "commit-msg", "pre-commit", "pre-push" }
+
+for _, hook_name in ipairs(required_hooks) do
+    local hook_path = hooks_dir .. "/" .. hook_name
+    if not gost.file_exists(hook_path) then
+        return false, "ERR_GIT_HOOK_MISSING", { hook = hook_name }
+    end
+
+    local content = gost.read_file(hook_path) or ""
+    if not content:match("cccp%-hook%-") and not content:match("cccp hook") then
+        return false, "ERR_GIT_HOOK_NOT_MANAGED", { hook = hook_name }
+    end
+end
+
+return true
+'''
+severity = "error"
+tier = 1
+
+[rules.KOLLONTAI-018.messages]
+ERR_GIT_HOOK_MISSING = "Git hook '{hook}' is missing. Run 'cccp hook install' to install maestro hooks."
+ERR_GIT_HOOK_NOT_MANAGED = "Git hook '{hook}' is not managed by the cccp maestro. Run 'cccp hook install --force' to synchronize hooks."
+
+[rules.LILYA-001]
+description = "Canonical VERSION file must not contain a 'v' prefix"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-001"
+name = "VERSION-NO-V-PREFIX"
+scope = "project"
+script = """
+if not gost.file_exists("VERSION") then
+    return true
+end
+local content = gost.read_file("VERSION"):match("^%s*(.-)%s*$")
+if content:sub(1, 1) == "v" then
+    return false, "ERR_VERSION_V_PREFIX_PROHIBITED", { version = content }
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-001.messages]
+ERR_VERSION_V_PREFIX_PROHIBITED = "Canonical VERSION file must not start with 'v' prefix: '{version}'"
+
+[rules.LILYA-002]
+description = "Repository documentation or site must include transfeminist identity assertion"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-002"
+name = "TRANSFEMINIST-IDENTITY-REQUIRED"
+scope = "project"
+script = """
+local has_identity = false
+if gost.file_exists("profile.md") then
+    local content = gost.read_file("profile.md") or ""
+    if content:match("travesti") or content:match("lumen%.pink") then
+        has_identity = true
+    end
+end
+if not has_identity and gost.file_exists("README.md") then
+    local content = gost.read_file("README.md") or ""
+    if content:match("travesti") or content:match("lumen%.pink") then
+        has_identity = true
+    end
+end
+if not has_identity then
+    return false, "ERR_TRANSFEMINIST_IDENTITY_MISSING", {}
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-002.messages]
+ERR_TRANSFEMINIST_IDENTITY_MISSING = "Transfeminist identity assertion is missing from documentation"
+
+[rules.LILYA-003]
+description = "The .cccprc file must declare primary_forge_domain as gambi.2lp.in"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-003"
+name = "PRIMARY-FORGE-GAMBI-CANONICAL"
+scope = "project"
+script = """
+if not gost.file_exists(".cccprc") then
+    return false, "ERR_CCCPRC_MISSING", {}
+end
+local content = gost.read_file(".cccprc") or ""
+if not content:match("primary_forge_domain%s*=%s*gambi%.2lp%.in") and not content:match("gambi%.2lp%.in") then
+    return false, "ERR_GAMBI_DOMAIN_MISSING", {}
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-003.messages]
+ERR_CCCPRC_MISSING = "Configuration file .cccprc is missing"
+ERR_GAMBI_DOMAIN_MISSING = "Canonical primary forge domain gambi.2lp.in is not declared in .cccprc"
+
+[rules.LILYA-004]
+description = "Every repository must have a .cccprc configuration file at the root"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-004"
+name = "CCCPRC-FILE-REQUIRED"
+scope = "project"
+script = """
+if not gost.file_exists(".cccprc") then
+    return false, "ERR_CCCPRC_MISSING", {}
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-004.messages]
+ERR_CCCPRC_MISSING = "Configuration file '.cccprc' is missing from repository root"
+
+[rules.LILYA-005]
+description = "Static catalog.json and kombinat.toml files are strictly prohibited in repositories"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-005"
+name = "STATIC-MANIFESTS-PROHIBITED"
+scope = "project"
+script = """
+if gost.file_exists("catalog.json") then
+    return false, "ERR_STATIC_CATALOG_PROHIBITED", { file = "catalog.json" }
+end
+if gost.file_exists("kombinat.toml") then
+    return false, "ERR_STATIC_KOMBINAT_PROHIBITED", { file = "kombinat.toml" }
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-005.messages]
+ERR_STATIC_CATALOG_PROHIBITED = "Static catalog.json is strictly prohibited; inventory is managed via Gossnab API"
+ERR_STATIC_KOMBINAT_PROHIBITED = "Static kombinat.toml is strictly prohibited; dependency state is managed via Gossnab API"
+
+[rules.LILYA-006]
+description = "Docker compose files must strictly use .yaml extension, never .yml"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-006"
+name = "STRICT-COMPOSE-YAML-EXTENSION"
+scope = "project"
+script = """
+if gost.file_exists("compose.yml") or gost.file_exists("docker-compose.yml") then
+    return false, "ERR_YML_EXTENSION_BANNED", {}
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-006.messages]
+ERR_YML_EXTENSION_BANNED = "Extension .yml is strictly banned for docker compose; use .yaml"
+
+[rules.LILYA-007]
+description = "Gossnab canonical metadata manifest (.gost/metadata.json) must be valid and declare schema_version"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-007"
+name = "METADATA-MANIFEST-SCHEMA"
+scope = "project"
+script = """
+local meta_path = ".gost/metadata.json"
+if not gost.file_exists(meta_path) then
+    return false, "ERR_METADATA_MANIFEST_MISSING", {}
+end
+local content = gost.read_file(meta_path) or ""
+if not content:match('"schema_version"') then
+    return false, "ERR_METADATA_SCHEMA_INVALID", {}
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-007.messages]
+ERR_METADATA_MANIFEST_MISSING = "Canonical metadata manifest '.gost/metadata.json' is missing"
+ERR_METADATA_SCHEMA_INVALID = "Metadata manifest '.gost/metadata.json' does not declare schema_version"
+
+[rules.LILYA-008]
+description = "Compiled CLI binaries in post-build must output informative structured help on --help"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-008"
+name = "CLI-HELP-INFORMATIVE-POST-BUILD"
+scope = "post-build"
+script = """
+local bin = gost.target_binary()
+if not bin or bin == "" then
+    return true
+end
+
+local res_help = gost.exec_artifact(bin, { "--help" }, 3000)
+if not res_help.ok or not res_help.stdout or #res_help.stdout < 10 then
+    return false, "ERR_CLI_HELP_FAILED", { binary = bin }
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-008.messages]
+ERR_CLI_HELP_FAILED = "CLI conformance failed: binary '{binary} --help' failed or returned insufficient help text"
+
+[rules.LILYA-009]
+description = "Compiled CLI binaries in post-build must output version strictly matching repository VERSION"
+docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-009"
+name = "CLI-VERSION-METADATA-PARITY-POST-BUILD"
+scope = "post-build"
+script = """
+local bin = gost.target_binary()
+if not bin or bin == "" then
+    return true
+end
+
+local res_ver = gost.exec_artifact(bin, { "--version" }, 3000)
+if not res_ver.ok or not res_ver.stdout then
+    return false, "ERR_CLI_VERSION_FAILED", { binary = bin }
+end
+
+local expected_ver = gost.read_file("VERSION")
+if expected_ver then
+    expected_ver = expected_ver:gsub("%s+", "")
+    if expected_ver ~= "" and not res_ver.stdout:match(expected_ver) then
+        return false, "ERR_CLI_VERSION_MISMATCH", { binary = bin, expected = expected_ver, got = res_ver.stdout:gsub("%s+$", "") }
+    end
+end
+return true
+"""
+severity = "error"
+tier = 2
+
+[rules.LILYA-009.messages]
+ERR_CLI_VERSION_FAILED = "CLI conformance failed: binary '{binary} --version' execution failed"
+ERR_CLI_VERSION_MISMATCH = "CLI conformance failed: binary '{binary} --version' output '{got}' does not contain expected version '{expected}'"

@@ -1,4 +1,4 @@
-name: "CI/CD & Sovereign Release to Banca"
+name: "CI/CD & Autonomous Release to Banca"
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: "Configure Sovereign Lumen Cargo Registry"
+      - name: "Configure Autonomous Lumen Cargo Registry"
         run: |
           mkdir -p "$HOME/.cargo"
           printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
@@ -36,7 +36,7 @@ jobs:
           fi
 
       - name: "Format Check"
-        run: cargo fmt -- --check
+        run: cargo fmt --check
 
       - name: "Clippy Check (Zero Warnings)"
         run: cargo clippy --all-targets -- -D warnings
@@ -81,7 +81,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "★ Canal: $CHANNEL | Versão: $VERSION"
 
-      - name: "Configure Sovereign Lumen Cargo Registry"
+      - name: "Configure Autonomous Lumen Cargo Registry"
         run: |
           mkdir -p "$HOME/.cargo"
           printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"

@@ -1,4 +1,0 @@
-# GOSTVER — Declaração de Conformidade com o Padrão GOST
-GOST_VERSION="1.4.0"
-GOST_PROFILE_URL="https://gostlumen.2lp.in/profile.md"
-GOST_LANGUAGES="rust"

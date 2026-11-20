@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "slug": "kvant",
+  "title": "Kvant",
+  "site_type": "app",
+  "tagline": "Micro editor de texto de terminal em Rust puro",
+  "summary": "Micro editor de terminal minimalista, rápido e com zero dependências externas.",
+  "abstract": "O Kvant (kv) é um editor de texto de terminal em Rust puro concebido para edições rápidas com navegação intuitiva, suporte UTF-8 estrito e footprint de memória ultracompacto.",
+  "tags": [
+    "kvant",
+    "editor",
+    "terminal",
+    "tui",
+    "rust",
+    "cli"
+  ],
+  "icon": "⚡",
+  "theme": {
+    "bg_color": "#1e1e2e",
+    "accent_color": "#cba6f7"
+  }
+}
