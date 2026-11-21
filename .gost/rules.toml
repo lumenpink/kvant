@@ -471,6 +471,11 @@ if not gost.is_dir(".git") and not gost.file_exists(".git") then
     return true
 end
 
+-- If running inside a hermetic CI environment, skip local git hooks verification
+if os and os.getenv and (os.getenv("CI") == "true" or os.getenv("GITHUB_ACTIONS") == "true" or os.getenv("FORGEJO_ACTIONS") == "true") then
+    return true
+end
+
 -- Resolve hooks directory from .git/config (core.hooksPath) or default to .git/hooks
 local hooks_dir = ".git/hooks"
 if gost.file_exists(".git/config") then
