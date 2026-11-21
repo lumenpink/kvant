@@ -1,6 +1,6 @@
 [package]
 name = "kvant"
-version = "0.1.0-dev.34+20261024.632e317"
+version = "0.1.0-dev.35+20261120.8a65047"
 edition = "2021"
 authors = ["Lumen Pink <hi@lumen.pink>"]
 description = "Kvant (kv) — Micro terminal text editor in pure Rust with full keyboard navigation"
