@@ -5,19 +5,19 @@
 > A precedência é estrita de baixo para cima: cada camada subsequente sobrepõe as definições anteriores.
 
 ### 🌳 Árvore de Herança e Precedência Resolvida:
-1. Camada 1: `https://kollontai.2lp.in/2.1.0/RULES.md`
-2. Camada 2: `https://lilya.2lp.in/2.1.0/RULES.md`
+1. Camada 1: `https://kollontai.2lp.in/2.2.0/RULES.md`
+2. Camada 2: `https://lilya.2lp.in/2.2.0/RULES.md`
 
 ---
 
 <!-- ===================================================================== -->
-<!-- CAMADA 1: https://kollontai.2lp.in/2.1.0/RULES.md -->
+<!-- CAMADA 1: https://kollontai.2lp.in/2.2.0/RULES.md -->
 <!-- ===================================================================== -->
 
 ---
 standard: "kollontai"
 tier: "tactical"
-version: "2.1.0"
+version: "2.2.0"
 locale: "pt-br"
 authority: "Standards Committee"
 published_at: "2026-11-08"
@@ -140,7 +140,7 @@ As regras arquiteturais (DDD/Hexagonal), estruturas de diretórios, templates de
 
 | Stack (`GOST_LANGUAGES`) | Versão Canônica / Runtime | Runner de Testes & Cobertura (≥90%) | Mutação (Fase 7) | Linter (`-D warnings`) & Formatador |
 | :--- | :--- | :--- | :--- | :--- |
-| **`rust`** | `rustc >= 1.99.0` (`edition = "2024"`, target estático `musl`) | `cargo test` + `cargo-llvm-cov` | `cargo-mutants` (`--in-diff`) | `clippy` + `rustfmt` + `cargo-audit` |
+| **`rust`** | `rustc >= 1.100.0` (`edition = "2024"`, target estático `musl`) | `cargo test` + `cargo-llvm-cov` | `cargo-mutants` (`--in-diff`) | `clippy` + `rustfmt` + `cargo-audit` |
 | **`php`** | `PHP >= 8.5.0` (compatibilidade reversa `>= 8.2`, `strict_types=1`) | `pest --coverage --min=90` | `infection` (`--git-diff-lines`) | `phpstan --level=max` (target 8.2) + `pint` + `composer audit` |
 | **`shell`** | POSIX `/bin/sh` estrito (ou `Bash >= 5.2` justificado) | `shellspec --kcov` | Revisão de borda (Boundary/Subshells) | `shellcheck` + `shfmt -d -i 2 -ci -bn` |
 | **`javascript`** | `Node.js >= 24.16.0 LTS` (ESM nativo) + `TypeScript >= 5.8` (`strict`) | `vitest` (v8 coverage) + `playwright` (E2E) | `stryker` | `biome check` + `npm audit` |
@@ -446,21 +446,21 @@ O catálogo tático do perfil Kollontai estabelece parâmetros objetivos de enge
 ---
 
 <!-- ===================================================================== -->
-<!-- CAMADA 2: https://lilya.2lp.in/2.1.0/RULES.md -->
+<!-- CAMADA 2: https://lilya.2lp.in/2.2.0/RULES.md -->
 <!-- ===================================================================== -->
 
 ---
 standard: "lilya"
 tier: "operational"
-version: "2.1.0"
+version: "2.2.0"
 locale: "pt-br"
 authority: "Standards Committee"
 published_at: "2026-11-08"
 inherits_from:
   standard: "kollontai"
   tier: "tactical"
-  version: "2.1.0"
-  base_url: "https://kollontai.2lp.in/2.1.0/"
+  version: "2.2.0"
+  base_url: "https://kollontai.2lp.in/2.2.0/"
 ---
 
 # Perfil de Implementação GOST: Lilya
@@ -815,7 +815,7 @@ O perfil Lilya consolida as regras operacionais idiossincráticas da fábrica de
 ---
 
 ## 1. Visão Geral e Filosofia
-Esta especificação define os requisitos de engenharia, ferramentas e padrões para desenvolvimento em **Rust** (edição 2024 canônica, compilador `rustc >= 1.99.0`) no ecossistema GOST.
+Esta especificação define os requisitos de engenharia, ferramentas e padrões para desenvolvimento em **Rust** (edição 2024 canônica, compilador `rustc >= 1.100.0`) no ecossistema GOST.
 
 ---
 

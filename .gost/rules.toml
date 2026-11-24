@@ -1,6 +1,6 @@
 [rules.KOLLONTAI-001]
 description = "README.md must have at most 50 lines of concise documentation"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-001"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-001"
 name = "README-MAX-LINES"
 scope = "project"
 script = """
@@ -22,7 +22,7 @@ ERR_README_EXCEEDS_50_LINES = "README.md exceeds 50 lines (found {lines} lines).
 
 [rules.KOLLONTAI-002]
 description = "Product banner must adhere to canonical 1200x630 dimensions (1.91:1 ratio)"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-002"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-002"
 name = "BANNER-DIMENSIONS-AND-RATIO"
 scope = "project"
 script = """
@@ -47,7 +47,7 @@ ERR_BANNER_DIMENSIONS_INVALID = "Product banner does not match 1200x630 dimensio
 
 [rules.KOLLONTAI-003]
 description = "Core domain logic in src/domain/ must not import I/O, network or database drivers"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-003"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-003"
 name = "DDD-DOMAIN-PURITY"
 scope = "project"
 script = """
@@ -73,7 +73,7 @@ ERR_DOMAIN_IMPURE_IMPORT = "Domain purity violation: file '{file}' imports exter
 
 [rules.KOLLONTAI-004]
 description = "CI workflow must enforce zero compiler/linter warnings (-D warnings or strict flags)"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-004"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-004"
 name = "STATIC-ANALYSIS-ZERO-WARNINGS"
 scope = "ci"
 script = """
@@ -94,7 +94,7 @@ ERR_CI_ZERO_WARNINGS_NOT_ENFORCED = "CI workflow does not explicitly enforce zer
 
 [rules.KOLLONTAI-005]
 description = "CI workflow must verify deterministic code formatting (fmt --check)"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-005"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-005"
 name = "FORMAT-CHECK-DETERMINISTIC"
 scope = "ci"
 script = """
@@ -115,7 +115,7 @@ ERR_CI_FORMAT_CHECK_NOT_ENFORCED = "CI workflow does not execute deterministic c
 
 [rules.KOLLONTAI-006]
 description = "Static site must include security headers in site/_headers"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-006"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-006"
 name = "SITE-SECURITY-HEADERS"
 scope = "project"
 script = """
@@ -141,7 +141,7 @@ ERR_SECURITY_HEADERS_MISSING = "Mandatory site security configuration 'site/_hea
 
 [rules.KOLLONTAI-007]
 description = "Compose specification must define unprivileged user '1000:1000'"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-007"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-007"
 name = "COMPOSE-NON-ROOT-USER"
 scope = "project"
 script = """
@@ -164,7 +164,7 @@ ERR_COMPOSE_NON_ROOT_MISSING = "Compose specification in '{file}' must declare u
 
 [rules.KOLLONTAI-008]
 description = "Compose specification must declare healthcheck probes"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-008"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-008"
 name = "COMPOSE-HEALTHCHECK-REQUIRED"
 scope = "project"
 script = """
@@ -187,7 +187,7 @@ ERR_COMPOSE_HEALTHCHECK_MISSING = "Compose specification in '{file}' must declar
 
 [rules.KOLLONTAI-009]
 description = "Dockerfile must declare non-root user (USER 1000:1000)"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-009"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-009"
 name = "DOCKERFILE-NON-ROOT-USER"
 scope = "project"
 script = '''
@@ -207,7 +207,7 @@ ERR_DOCKERFILE_NON_ROOT_MISSING = "Dockerfile must declare unprivileged user 'US
 
 [rules.KOLLONTAI-010]
 description = "API contract files must be valid OpenAPI 3.x specifications"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-010"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-010"
 name = "API-CONTRACT-OPENAPI"
 scope = "project"
 script = """
@@ -238,7 +238,7 @@ ERR_OPENAPI_SPEC_INVALID = "API contract schema in '{file}' must declare OpenAPI
 
 [rules.KOLLONTAI-011]
 description = "Documentation and markdown files must not contain prohibited terms"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-011"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-011"
 name = "FORBIDDEN-TERMS"
 scope = "docs"
 script = """
@@ -261,7 +261,7 @@ ERR_FORBIDDEN_TERM_FOUND = "Forbidden term found in documentation file '{file}'"
 
 [rules.KOLLONTAI-012]
 description = "Compiled binary artifacts must pass a basic smoke test without SIGSEGV or panic"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-012"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-012"
 name = "SMOKE-TEST-SANITY-POST-BUILD"
 scope = "post-build"
 script = """
@@ -292,7 +292,7 @@ ERR_SMOKE_SEGFAULT = "Post-build smoke test failed: binary '{binary}' terminated
 
 [rules.KOLLONTAI-013]
 description = "Internationalization dictionary key parity across declared languages in GOSTVER"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-013"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-013"
 name = "INTL-KEY-PARITY"
 scope = "project"
 script = """
@@ -311,7 +311,7 @@ ERR_INTL_PARITY_MISMATCH = "Translation dictionaries do not share key parity for
 
 [rules.KOLLONTAI-014]
 description = "CSS logical properties and dir=rtl must be used when RTL languages are declared"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-014"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-014"
 name = "RTL-LOGICAL-PROPERTIES-AUDIT"
 scope = "project"
 script = """
@@ -348,7 +348,7 @@ ERR_RTL_SUPPORT_MISSING = "RTL language declared in GOSTVER but site lacks CSS l
 
 [rules.KOLLONTAI-015]
 description = "Client router must adopt English (en) as default fallback when visitor browser language is unavailable"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-015"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-015"
 name = "I18N-SITE-FALLBACK-ENGLISH"
 scope = "project"
 script = """
@@ -374,7 +374,7 @@ ERR_FALLBACK_NOT_ENGLISH = "Website router in '{file}' must configure English ('
 
 [rules.KOLLONTAI-016]
 description = "Package manifests must not contain local filesystem path dependencies (path = '...')"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-016"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-016"
 name = "FORBIDDEN-PATH-DEPENDENCIES"
 scope = "project"
 script = '''
@@ -400,7 +400,7 @@ ERR_PATH_DEPENDENCY_FORBIDDEN = "Local filesystem path dependency detected in ma
 
 [rules.KOLLONTAI-017]
 description = "Repositories must have an authorized root LICENSE (GPL-3.0 by default) and compliant modular satellites"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-017"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-017"
 name = "LICENSING-MATRIX-COMPLIANCE"
 scope = "project"
 script = """
@@ -462,7 +462,7 @@ ERR_SATELLITE_LICENSE_INVALID = "Modular satellite license '{file}' does not mat
 
 [rules.KOLLONTAI-018]
 description = "Git hooks must be installed and actively managed by the cccp maestro"
-docs_url = "https://kollontai.2lp.in/2.1.0/rules/KOLLONTAI-018"
+docs_url = "https://kollontai.2lp.in/2.2.0/rules/KOLLONTAI-018"
 name = "GIT-HOOKS-MAESTRO-PARITY"
 scope = "project"
 script = '''
@@ -515,7 +515,7 @@ ERR_GIT_HOOK_NOT_MANAGED = "Git hook '{hook}' is not managed by the cccp maestro
 
 [rules.LILYA-001]
 description = "Canonical VERSION file must not contain a 'v' prefix"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-001"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-001"
 name = "VERSION-NO-V-PREFIX"
 scope = "project"
 script = """
@@ -536,7 +536,7 @@ ERR_VERSION_V_PREFIX_PROHIBITED = "Canonical VERSION file must not start with 'v
 
 [rules.LILYA-002]
 description = "Repository documentation or site must include transfeminist identity assertion"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-002"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-002"
 name = "TRANSFEMINIST-IDENTITY-REQUIRED"
 scope = "project"
 script = """
@@ -566,7 +566,7 @@ ERR_TRANSFEMINIST_IDENTITY_MISSING = "Transfeminist identity assertion is missin
 
 [rules.LILYA-003]
 description = "The .cccprc file must declare primary_forge_domain as gambi.2lp.in"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-003"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-003"
 name = "PRIMARY-FORGE-GAMBI-CANONICAL"
 scope = "project"
 script = """
@@ -588,7 +588,7 @@ ERR_GAMBI_DOMAIN_MISSING = "Canonical primary forge domain gambi.2lp.in is not d
 
 [rules.LILYA-004]
 description = "Every repository must have a .cccprc configuration file at the root"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-004"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-004"
 name = "CCCPRC-FILE-REQUIRED"
 scope = "project"
 script = """
@@ -605,7 +605,7 @@ ERR_CCCPRC_MISSING = "Configuration file '.cccprc' is missing from repository ro
 
 [rules.LILYA-005]
 description = "Static catalog.json and kombinat.toml files are strictly prohibited in repositories"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-005"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-005"
 name = "STATIC-MANIFESTS-PROHIBITED"
 scope = "project"
 script = """
@@ -626,7 +626,7 @@ ERR_STATIC_KOMBINAT_PROHIBITED = "Static kombinat.toml is strictly prohibited; d
 
 [rules.LILYA-006]
 description = "Docker compose files must strictly use .yaml extension, never .yml"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-006"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-006"
 name = "STRICT-COMPOSE-YAML-EXTENSION"
 scope = "project"
 script = """
@@ -643,7 +643,7 @@ ERR_YML_EXTENSION_BANNED = "Extension .yml is strictly banned for docker compose
 
 [rules.LILYA-007]
 description = "Gossnab canonical metadata manifest (.gost/metadata.json) must be valid and declare schema_version"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-007"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-007"
 name = "METADATA-MANIFEST-SCHEMA"
 scope = "project"
 script = """
@@ -666,7 +666,7 @@ ERR_METADATA_SCHEMA_INVALID = "Metadata manifest '.gost/metadata.json' does not 
 
 [rules.LILYA-008]
 description = "Compiled CLI binaries in post-build must output informative structured help on --help"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-008"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-008"
 name = "CLI-HELP-INFORMATIVE-POST-BUILD"
 scope = "post-build"
 script = """
@@ -689,7 +689,7 @@ ERR_CLI_HELP_FAILED = "CLI conformance failed: binary '{binary} --help' failed o
 
 [rules.LILYA-009]
 description = "Compiled CLI binaries in post-build must output version strictly matching repository VERSION"
-docs_url = "https://lilya.2lp.in/2.1.0/rules/LILYA-009"
+docs_url = "https://lilya.2lp.in/2.2.0/rules/LILYA-009"
 name = "CLI-VERSION-METADATA-PARITY-POST-BUILD"
 scope = "post-build"
 script = """
